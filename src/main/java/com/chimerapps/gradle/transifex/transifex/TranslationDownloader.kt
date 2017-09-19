@@ -17,8 +17,8 @@
 
 package com.chimerapps.gradle.transifex.transifex
 
+import com.chimerapps.gradle.transifex.TranslationConfiguration
 import com.chimerapps.gradle.transifex.transifex.api.TransifexApi
-import groovy.lang.Closure
 import org.gradle.api.logging.Logger
 import java.io.File
 import java.io.FileOutputStream
@@ -29,32 +29,48 @@ import java.io.FileOutputStream
  */
 class TranslationDownloader(private val transifexApi: TransifexApi, private val logger: Logger) {
 
-    fun download(projectSlug: String, outputRoot: String, stringsFileName: String, languageRename: Closure<String>?) {
-        logger.debug("Downloading translations for project ($projectSlug)")
+    fun download(configuration: TranslationConfiguration) {
+
+        logger.debug("Downloading translations for project ($configuration)")
+
+        val projectSlug = configuration.projectSlug ?: throw IllegalArgumentException("Project slug must be provided")
+        val fileNameProvider = configuration.fileNameProvider
+        val folderProvider = configuration.folderProvider
+        val sourceRootProvider = configuration.sourceRootProvider
 
         val projectResourcesResponse = transifexApi.getProjectResources(projectSlug).execute()
-        val resourceSlug = projectResourcesResponse.body()?.find { it.type == "ANDROID" }?.slug ?: throw IllegalArgumentException("Could not find android resources in transifex response")
+        val resourceSlug = projectResourcesResponse.body()?.find { it.type == configuration.i18n_type }?.slug
+                ?: throw IllegalArgumentException("Could not find android resources in transifex response")
         val projectDetailsResponse = transifexApi.getProjectResourceDetails(projectSlug, resourceSlug).execute()
 
         logger.debug("Project download result: ${projectDetailsResponse.message()} and code ${projectDetailsResponse.code()}. Body: ${projectDetailsResponse.body()}")
 
-        val projectLanguages = projectDetailsResponse.body()?.availableLanguages ?: throw IllegalArgumentException("Failed to load list of languages")
+        val projectLanguages = projectDetailsResponse.body()?.availableLanguages
+                ?: throw IllegalArgumentException("Failed to load list of languages")
+
         logger.debug("Got ${projectLanguages.size} language files")
         projectLanguages.forEach {
-            logger.debug("Downloading file: ${it.code}")
+            val folderName = folderProvider.call(it.code)
+            val dir = File(sourceRootProvider.call(it.code), folderName)
+            dir.mkdirs()
+            val targetFile = File(dir, fileNameProvider.call(it.code))
 
-            val translationFile = transifexApi.getProjectTranslation(projectSlug, resourceSlug, it.code).execute()
+            logger.debug("Downloading file for ${it.code} to ${targetFile.absolutePath}")
+
+            val translationFile = transifexApi.getProjectTranslation(projectSlug,
+                    resourceSlug,
+                    it.code,
+                    configuration.fileType).execute()
+
             val body = translationFile.body()
             if (body == null) {
                 logger.warn("Failed to download file for locale ${it.code}: ${translationFile.message()}")
                 return@forEach
             }
-            val folderName = "values-${languageRename?.call(it.code) ?: it.code}"
 
-            val dir = File(outputRoot.replace("{language}", languageRename?.call(it.code) ?: it.code), folderName)
-            dir.mkdirs()
-            FileOutputStream(File(dir, stringsFileName)).apply {
-                body.byteStream().copyTo(this)
+            FileOutputStream(targetFile).apply {
+                val size = body.byteStream().copyTo(this)
+                logger.debug("Translation file for ${it.code} saved, $size bytes")
             }
         }
     }

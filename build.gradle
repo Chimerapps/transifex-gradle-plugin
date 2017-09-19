@@ -13,8 +13,10 @@ plugins {
     id "com.jfrog.bintray" version "1.7.3"
 }
 
-group 'com.chimerapps.gradle'
-version '1.0.0'
+def artifactVersion = '1.0.1'
+def artifactGroup = 'com.chimerapps.gradle'
+group "$artifactGroup"
+version "$artifactVersion"
 
 apply plugin: 'java'
 apply plugin: 'kotlin'
@@ -70,15 +72,15 @@ bintray {
         repo = 'maven'
         name = 'transifex-gradle-plugin'
         licenses = ['Apache-2.0']
-        vcsUrl = 'https://github.com/Chimerapps/transifex-android-gradle-plugin'
+        vcsUrl = 'https://github.com/Chimerapps/transifex-gradle-plugin'
 
         version {
-            name = "$version"
+            name = "$artifactVersion"
             desc = "Gradle plugin for transifex"
             released = new Date()
         }
     }
-    publications = ['MyPublication']
+    publications = ['maven']
 }
 
 def pomConfig = {
@@ -100,10 +102,10 @@ def pomConfig = {
 
 publishing {
     publications {
-        MyPublication(MavenPublication) {
-            groupId 'com.chimerapps.gradle'
+        maven(MavenPublication) {
+            groupId "$artifactGroup"
             artifactId 'transifex-plugin'
-            version '1.0.0'
+            version "$artifactVersion"
 
             from components.java
 
@@ -116,7 +118,7 @@ publishing {
                 def root = asNode()
                 root.appendNode('description', 'Gradle plugin that allows translations to be downloaded from transifex')
                 root.appendNode('name', 'transifex-gradle-plugin')
-                root.appendNode('url', 'https://github.com/Chimerapps/moshi-generator')
+                root.appendNode('url', 'https://github.com/Chimerapps/transifex-gradle-plugin')
                 root.children().last() + pomConfig
             }
         }

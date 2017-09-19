@@ -31,7 +31,35 @@ open class TranslationConfiguration(open var name: String = "default") {
     open var projectSlug: String? = null
     open var fileName: String = "strings.xml"
     open var sourceRoot: String = "src/main/res"
-    open var languageRename: Closure<String>? = null
+    open var fileType: String = "xml"
+    open var i18n_type: String = "ANDROID"
+
+    open var sourceRootProvider: Closure<String> = object : Closure<String>(null) {
+        override fun call(vararg args: Any?): String {
+            val code = (args[0] as String)
+            return sourceRoot.replace("{language}", languageRename.call(code) ?: code)
+        }
+    }
+    open var languageRename: Closure<String> = object : Closure<String>(null) {
+        override fun call(vararg args: Any?): String {
+            return (args[0] as String)
+        }
+    }
+    open var fileNameProvider: Closure<String> = object : Closure<String>(null) {
+        override fun call(vararg args: Any?): String {
+            return fileName
+        }
+    }
+    open var folderProvider: Closure<String> = object : Closure<String>(null) {
+        override fun call(vararg args: Any?): String {
+            val code = (args[0] as String)
+            return "values-${languageRename.call(code) ?: code}"
+        }
+    }
+
+    override fun toString(): String {
+        return "TranslationConfiguration(name='$name', apiKey=$apiKey, projectSlug=$projectSlug, fileName='$fileName', sourceRoot='$sourceRoot', fileType='$fileType', i18n_type='$i18n_type', languageRename=$languageRename, fileNameProvider=$fileNameProvider, folderProvider=$folderProvider)"
+    }
 
 }
 

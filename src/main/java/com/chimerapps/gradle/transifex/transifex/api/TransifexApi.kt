@@ -45,6 +45,6 @@ interface TransifexApi {
     fun getProjectTranslation(@Path("projectSlug") projectSlug: String,
                               @Path("resourceSlug") resourceSlug: String,
                               @Path("languageId") languageId: String,
-                              @Query("file") file: String = "xml"): Call<ResponseBody>
+                              @Query("file") file: String): Call<ResponseBody>
 
 }

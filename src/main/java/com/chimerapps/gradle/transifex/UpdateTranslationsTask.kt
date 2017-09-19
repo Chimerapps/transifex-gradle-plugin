@@ -37,15 +37,10 @@ open class UpdateTranslationsTask : DefaultTask() {
     fun updateTranslations() {
         logger.debug("Update translations task running for config ${configuration.name}")
 
-        val extension = project.extensions.findByType(DownloadTranslationsExtension::class.java)
-        val apiKey = extension.apiKey ?: throw IllegalArgumentException("No api key provided for transifex")
-        val projectSlug = extension.projectSlug ?: throw IllegalArgumentException("No project slug provided for transifex")
-
+        val apiKey = configuration.apiKey ?: throw IllegalArgumentException("No api key provided for transifex")
         apiAuth.apiToken = apiKey
 
-        val targetDir = project.file(extension.sourceRoot)
-        logger.debug("Saving translations to $targetDir")
-        TranslationDownloader(api, logger).download(projectSlug, targetDir.absolutePath, extension.fileName, extension.languageRename)
+        TranslationDownloader(api, logger).download(configuration)
     }
 
 }
