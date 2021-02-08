@@ -29,8 +29,8 @@ import org.gradle.api.tasks.TaskAction
  */
 open class UpdateTranslationsTask : DefaultTask() {
 
-    private val apiAuth: ApiTokenAuthInterceptor by lazy { project.plugins.findPlugin(DownloadTranslationsPlugin::class.java).authInterceptor }
-    private val api: TransifexApi by lazy { project.plugins.findPlugin(DownloadTranslationsPlugin::class.java).transifexApi }
+    private val apiAuth: ApiTokenAuthInterceptor by lazy { project.plugins.findPlugin(DownloadTranslationsPlugin::class.java)!!.authInterceptor }
+    private val api: TransifexApi by lazy { project.plugins.findPlugin(DownloadTranslationsPlugin::class.java)!!.transifexApi }
     lateinit var configuration: TranslationConfiguration
 
     @TaskAction
